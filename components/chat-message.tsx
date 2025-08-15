@@ -8,9 +8,10 @@ interface ChatMessageProps {
   isUser: boolean
   persona?: Persona
   timestamp?: Date
+  isStreaming?: boolean
 }
 
-export function ChatMessage({ message, isUser, persona, timestamp }: ChatMessageProps) {
+export function ChatMessage({ message, isUser, persona, timestamp, isStreaming = false }: ChatMessageProps) {
   const personas = {
     hitesh: {
       name: "Hitesh Choudhary",
@@ -55,13 +56,17 @@ export function ChatMessage({ message, isUser, persona, timestamp }: ChatMessage
         className={cn(
           "px-4 py-3 max-w-[80%] transition-all duration-200",
           isUser ? "bg-primary text-primary-foreground ml-auto" : "bg-card text-card-foreground hover:bg-accent/50",
+          isStreaming && "animate-pulse",
         )}
       >
         {!isUser && currentPersona && (
           <div className="text-xs font-heading font-semibold mb-1 opacity-80">{currentPersona.name}</div>
         )}
-        <div className="text-sm leading-relaxed whitespace-pre-wrap">{message}</div>
-        {timestamp && (
+        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+          {message}
+          {isStreaming && <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse opacity-70">|</span>}
+        </div>
+        {timestamp && !isStreaming && (
           <div className="text-xs opacity-60 mt-2">
             {timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>

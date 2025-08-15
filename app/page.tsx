@@ -4,6 +4,7 @@ import { useState } from "react"
 import { PersonaToggle, type Persona } from "@/components/persona-toggle"
 import { ChatMessage } from "@/components/chat-message"
 import { ChatInput } from "@/components/chat-input"
+import { SystemPromptModal } from "@/components/system-prompt-modal"
 import { Card } from "@/components/ui/card"
 import { GraduationCap, MessageCircle } from "lucide-react"
 
@@ -18,6 +19,11 @@ interface Message {
 interface ChatHistories {
   hitesh: Message[]
   piyush: Message[]
+}
+
+interface SystemPrompts {
+  hitesh: string
+  piyush: string
 }
 
 export default function Home() {
@@ -45,9 +51,28 @@ export default function Home() {
     ],
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [streamingMessage, setStreamingMessage] = useState("")
+
+  const [systemPrompts, setSystemPrompts] = useState<SystemPrompts>({
+    hitesh: `You are Hitesh Choudhary, a popular EdTech instructor known for teaching JavaScript, React, and modern web development. 
+    You have a friendly, practical teaching style and always provide real-world examples. 
+    You're passionate about making complex concepts simple and accessible to everyone.
+    Keep your responses conversational, helpful, and include practical code examples when relevant.`,
+    piyush: `You are Piyush Garg, an EdTech instructor specializing in full-stack development and system design.
+    You have expertise in building scalable applications and love discussing architecture patterns.
+    Your teaching style is thorough and you enjoy breaking down complex systems into understandable parts.
+    Keep your responses detailed, practical, and focus on real-world application development.`,
+  })
 
   const handlePersonaChange = (persona: Persona) => {
     setCurrentPersona(persona)
+  }
+
+  const handleSystemPromptUpdate = (persona: Persona, prompt: string) => {
+    setSystemPrompts((prev) => ({
+      ...prev,
+      [persona]: prompt,
+    }))
   }
 
   const handleSendMessage = async (content: string) => {
@@ -66,27 +91,82 @@ export default function Home() {
       [currentPersona]: [...prev[currentPersona], userMessage],
     }))
     setIsLoading(true)
+    setStreamingMessage("")
 
-    // Simulate API call - replace with your actual API integration
-    setTimeout(() => {
-      const responses = {
-        hitesh: [
-          "Great question! Let me break this down for you with a practical example...",
-          "That's a common challenge in JavaScript. Here's how I approach it...",
-          "Excellent! This is where React really shines. Let me show you...",
-        ],
-        piyush: [
-          "Perfect timing for this question! In full-stack development, we need to consider...",
-          "I love this topic! From a system design perspective...",
-          "That's exactly what we need to build scalable applications. Here's my approach...",
-        ],
+    try {
+      // Make API call to our chat endpoint
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: content,
+          persona: currentPersona,
+          chatHistory: chatHistories[currentPersona],
+          systemPrompt: systemPrompts[currentPersona], // Include custom system prompt
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to get response")
       }
 
-      const randomResponse = responses[currentPersona][Math.floor(Math.random() * responses[currentPersona].length)]
+      // Handle streaming response
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let accumulatedContent = ""
 
-      const aiMessage: Message = {
-        id: `${currentPersona}-${Date.now() + 1}`,
-        content: randomResponse,
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value)
+          const lines = chunk.split("\n")
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6)
+              if (data === "[DONE]") {
+                // Streaming complete, add final message to chat history
+                const aiMessage: Message = {
+                  id: `${currentPersona}-${Date.now() + 1}`,
+                  content: accumulatedContent,
+                  isUser: false,
+                  persona: currentPersona,
+                  timestamp: new Date(),
+                }
+
+                setChatHistories((prev) => ({
+                  ...prev,
+                  [currentPersona]: [...prev[currentPersona], aiMessage],
+                }))
+                setStreamingMessage("")
+                setIsLoading(false)
+                return
+              }
+
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.content) {
+                  accumulatedContent += parsed.content
+                  setStreamingMessage(accumulatedContent)
+                }
+              } catch (e) {
+                // Ignore parsing errors for malformed chunks
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
+
+      // Fallback error message
+      const errorMessage: Message = {
+        id: `${currentPersona}-error-${Date.now()}`,
+        content: "Sorry, I'm having trouble connecting right now. Please check your API configuration and try again.",
         isUser: false,
         persona: currentPersona,
         timestamp: new Date(),
@@ -94,10 +174,11 @@ export default function Home() {
 
       setChatHistories((prev) => ({
         ...prev,
-        [currentPersona]: [...prev[currentPersona], aiMessage],
+        [currentPersona]: [...prev[currentPersona], errorMessage],
       }))
       setIsLoading(false)
-    }, 1500)
+      setStreamingMessage("")
+    }
   }
 
   const currentMessages = currentPersona ? chatHistories[currentPersona] : []
@@ -115,6 +196,15 @@ export default function Home() {
               <h1 className="font-heading text-xl font-bold text-foreground">EdTech AI Assistant</h1>
               <p className="text-sm text-muted-foreground">Chat with Hitesh Choudhary and Piyush Garg</p>
             </div>
+            {currentPersona && (
+              <div className="ml-auto">
+                <SystemPromptModal
+                  currentPrompt={systemPrompts[currentPersona]}
+                  onSave={(prompt) => handleSystemPromptUpdate(currentPersona, prompt)}
+                  persona={currentPersona}
+                />
+              </div>
+            )}
           </div>
 
           <PersonaToggle currentPersona={currentPersona} onPersonaChange={handlePersonaChange} />
@@ -171,6 +261,16 @@ export default function Home() {
                   timestamp={message.timestamp}
                 />
               ))}
+
+              {streamingMessage && (
+                <ChatMessage
+                  message={streamingMessage}
+                  isUser={false}
+                  persona={currentPersona}
+                  timestamp={new Date()}
+                  isStreaming={true}
+                />
+              )}
             </div>
 
             {/* Loading indicator */}
