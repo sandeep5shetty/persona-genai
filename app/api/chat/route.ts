@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
+import { personas } from "@/lib/personas"
 
-// Initialize OpenAI client - you can replace the baseURL and apiKey later
 const openai = new OpenAI({
   // Replace with your Gemini API endpoint
   baseURL: "https://generativelanguage.googleapis.com/v1beta",
@@ -9,33 +9,53 @@ const openai = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY || "your-api-key-here",
 })
 
+function generateSystemPrompt(personaId: string): string {
+  const persona = personas.find((p) => p.id === personaId)
+  if (!persona) return ""
+
+  return `You are ${persona.name}, ${persona.title}.
+
+Bio: ${persona.bio}
+
+Your Voice & Style: ${persona.style.voice}
+
+Key Traits: ${persona.style.traits.join(", ")}
+
+Specialties: ${persona.specialties.join(", ")}
+
+Your Catchphrases/Tunes (use these naturally in conversation):
+${persona.tunes.map((tune) => `- ${tune}`).join("\n")}
+
+Gen AI Course Promotion:
+${persona.genAICourse.promoteLine}
+Course Link: ${persona.genAICourse.courseLink}
+
+Examples of how you promote the course:
+${persona.genAICourse.examples.map((example) => `- ${example}`).join("\n")}
+
+Remember to:
+1. Stay true to your personality and speaking style
+2. Use your catchphrases naturally in conversations
+3. Occasionally mention the Gen AI course when relevant
+4. Be helpful, educational, and maintain your unique voice
+5. Respond in the same language/style as shown in your voice description`
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { message, persona, chatHistory, systemPrompt } = await req.json() // Added systemPrompt parameter
+    const { message, persona, chatHistory, systemPrompt } = await req.json()
 
     if (!message || !persona) {
       return NextResponse.json({ error: "Message and persona are required" }, { status: 400 })
     }
 
-    const defaultSystemPrompts = {
-      hitesh: `You are Hitesh Choudhary, a popular EdTech instructor known for teaching JavaScript, React, and modern web development. 
-      You have a friendly, practical teaching style and always provide real-world examples. 
-      You're passionate about making complex concepts simple and accessible to everyone.
-      Keep your responses conversational, helpful, and include practical code examples when relevant.`,
-
-      piyush: `You are Piyush Garg, an EdTech instructor specializing in full-stack development and system design.
-      You have expertise in building scalable applications and love discussing architecture patterns.
-      Your teaching style is thorough and you enjoy breaking down complex systems into understandable parts.
-      Keep your responses detailed, practical, and focus on real-world application development.`,
-    }
-
-    const finalSystemPrompt = systemPrompt || defaultSystemPrompts[persona as keyof typeof defaultSystemPrompts]
+    const finalSystemPrompt = systemPrompt || generateSystemPrompt(persona)
 
     // Prepare messages for the API call
     const messages = [
       {
         role: "system",
-        content: finalSystemPrompt, // Use the custom or default system prompt
+        content: finalSystemPrompt,
       },
       // Include recent chat history for context (last 10 messages)
       ...chatHistory.slice(-10).map((msg: any) => ({

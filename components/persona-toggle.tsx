@@ -1,8 +1,9 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { personas } from "@/lib/personas"
 
-export type Persona = "hitesh" | "piyush"
+export type Persona = "hitesh" | "piyush" | "mannu"
 
 interface PersonaToggleProps {
   currentPersona: Persona | null
@@ -10,24 +11,27 @@ interface PersonaToggleProps {
 }
 
 export function PersonaToggle({ currentPersona, onPersonaChange }: PersonaToggleProps) {
-  const personas = {
-    hitesh: {
-      name: "Hitesh Choudhary",
-      title: "JavaScript & React Expert",
-      avatar: "/indian-male-teacher-javascript.png",
-      color: "from-blue-500 to-purple-600",
+  const personasData = personas.reduce(
+    (acc, persona) => {
+      acc[persona.id as Persona] = {
+        name: persona.name,
+        title: persona.title,
+        avatar: persona.avatar,
+        color:
+          persona.id === "hitesh"
+            ? "from-blue-500 to-purple-600"
+            : persona.id === "piyush"
+              ? "from-green-500 to-teal-600"
+              : "from-orange-500 to-red-600", // Mannu's color
+      }
+      return acc
     },
-    piyush: {
-      name: "Piyush Garg",
-      title: "Full-Stack Development Guru",
-      avatar: "/placeholder-vnskw.png",
-      color: "from-green-500 to-teal-600",
-    },
-  }
+    {} as Record<Persona, any>,
+  )
 
   return (
     <div className="flex items-center justify-center gap-4 p-4 bg-card rounded-lg border">
-      {Object.entries(personas).map(([key, persona]) => (
+      {Object.entries(personasData).map(([key, persona]) => (
         <Button
           key={key}
           variant={currentPersona === key ? "default" : "ghost"}
@@ -43,7 +47,7 @@ export function PersonaToggle({ currentPersona, onPersonaChange }: PersonaToggle
             <AvatarFallback className={`bg-gradient-to-br ${persona.color} text-white text-sm font-semibold`}>
               {persona.name
                 .split(" ")
-                .map((n) => n[0])
+                .map((n: string) => n[0])
                 .join("")}
             </AvatarFallback>
           </Avatar>

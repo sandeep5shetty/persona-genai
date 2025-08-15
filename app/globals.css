@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Removed problematic tw-animate-css import that was causing LightningCSS to fail */
+
 :root {
   /* Updated design tokens for EdTech AI assistant dark theme */
   --background: oklch(1 0 0);
@@ -73,8 +75,8 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
-/* Simplified @theme configuration to avoid LightningCSS issues */
 @theme inline {
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -119,11 +121,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Added custom animations for smooth interactions */
+/* Simplified theme configuration to use standard CSS custom properties */
+/* Added custom animations using standard CSS keyframes */
 @keyframes pulse-subtle {
   0%,
   100% {
