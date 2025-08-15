@@ -25,7 +25,8 @@ export function ChatMessage({ message, isUser, persona, timestamp, isStreaming =
     },
   }
 
-  const currentPersona = persona ? personas[persona] : null
+
+  const currentPersona = persona ? personas[persona as keyof typeof personas] : null
 
   return (
     <div

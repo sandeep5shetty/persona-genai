@@ -6,7 +6,7 @@ const openai = new OpenAI({
   // Replace with your Gemini API endpoint
   baseURL: "https://generativelanguage.googleapis.com/v1beta",
   // Replace with your actual API key
-  apiKey: process.env.GEMINI_API_KEY || "your-api-key-here",
+  apiKey: process.env.GEMINI_API_KEY,
 })
 
 function generateSystemPrompt(personaId: string): string {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // Make API call to Gemini (using OpenAI SDK format)
     // You can replace 'gpt-3.5-turbo' with your Gemini model name
     const completion = await openai.chat.completions.create({
-      model: "gemini-pro", // Replace with your actual Gemini model
+      model: "gemini-2.5-flash", // Replace with your actual Gemini model
       messages: messages,
       max_tokens: 1000,
       temperature: 0.7,

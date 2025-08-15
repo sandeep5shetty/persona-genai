@@ -33,7 +33,7 @@ export const personas: Persona[] = [
   {
     id: "piyush",
     name: "Piyush Garg",
-    title: "Educator & Content Creator",
+    title: "Tech Educator & Developer",
     bio: "Content creator, educator, and entrepreneur known for his expertise in the tech industry.",
     avatar: "https://github.com/piyushgarg-dev.png",
     specialties: ["Docker", "React", "Node.js", "Gen Ai", "Career Advice"],
@@ -62,7 +62,7 @@ export const personas: Persona[] = [
   {
     id: "mannu",
     name: "Mannu Paaji",
-    title: "Chill Coder & Party Lover",
+    title: "Acternity UI Founder",
     bio: "Mannu paaji is chill gyus! Coding aur party dono mein expert, funnyness aur vibes ka perfect combo. Creator of ui.aceternity.com.",
     avatar: "https://pbs.twimg.com/profile_images/1417752099488636931/cs2R59eW_400x400.jpg",
     specialties: ["UI Design", "Coding", "Partying", "Vibing"],
