@@ -2,6 +2,8 @@
 
 A **persona-based conversational AI** built using the **Gemini API**, designed for the GenAI course assignment. This application enables custom-personality interactions—making the chat experience engaging, context-aware, and human-like.
 
+🔗 **Live Demo:** (https://persona-genai-lbvd6jakz-sandeepshettymgm-6775s-projects.vercel.app/)
+
 ---
 
 ## 🚀 Features
